@@ -1,0 +1,49 @@
+.dashboard-header {
+  text-align: center;
+  margin-top: 30px;
+  color: var(--text-main);
+}
+
+.header-label {
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.header-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-bottom: 6px;
+}
+
+.header-subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.wave {
+  display: inline-block;
+  margin-left: 6px;
+  animation: waveAnim 1.4s ease-in-out infinite;
+}
+
+@keyframes waveAnim {
+  0% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(18deg);
+  }
+  40% {
+    transform: rotate(0deg);
+  }
+  60% {
+    transform: rotate(18deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}

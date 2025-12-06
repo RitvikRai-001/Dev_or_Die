@@ -1,0 +1,118 @@
+.manage-card {
+  position: relative;
+}
+
+.manage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.manage-form label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.input-field {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-size: 14px;
+  outline: none;
+  transition: border 0.18s ease, box-shadow 0.18s ease, background 0.18s ease,
+    transform 0.1s ease;
+}
+
+.input-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.38);
+  
+  transform: translateY(-1px);
+}
+
+select.input-field {
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
+select.input-field option {
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
+.med-search-wrapper {
+  position: relative;
+  border-radius: 14px;
+  padding: 2px;
+  background: linear-gradient(135deg, #7c4dff33, #b387ff33);
+}
+
+.med-search-wrapper::before {
+  content: "🔍";
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+
+.med-search-input {
+  padding-left: 38px;
+  border: 1px solid var(--primary);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.med-search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.med-search-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.9;
+}
+
+.time-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-row label {
+  width: 64px;
+}
+
+.primary-btn {
+  margin-top: 6px;
+  padding: 11px 14px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  box-shadow: 0 8px 20px rgba(129, 140, 248, 0.45);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(129, 140, 248, 0.65);
+}
+.input-field::placeholder {
+  color: var(--input-placeholder);
+}

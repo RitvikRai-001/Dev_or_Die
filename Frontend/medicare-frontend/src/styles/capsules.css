@@ -1,0 +1,66 @@
+.capsules-card .card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.capsule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--med-bg);
+  border-radius: 16px;
+  padding: 12px 16px;
+  margin-top: 10px;
+  border: 1px solid var(--border-subtle);
+}
+
+.capsule-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--med-text);
+}
+
+.capsule-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.capsule-time {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.capsule-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.capsule-status {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.badge-pending {
+  color: #f59e0b;
+}
+
+.badge-missed {
+  color: #dc2626;
+}
+
+.badge-done {
+  color: #16a34a;
+}
+
+.take-btn {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card-soft);
+  font-size: 12px;
+  font-weight: 600;
+}
