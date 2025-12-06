@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../styles/profile.css";
 import TopNav from "../components/TopNav";
-import { apiGetCurrentUser } from "../services/api";
+import { apiGetCurrentUser,apiUpdateProfile } from "../services/api";
 
 export default function Profile({ theme, onThemeSwitch }) {
   const [user, setUser] = useState(null);
@@ -15,54 +15,91 @@ export default function Profile({ theme, onThemeSwitch }) {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false); 
 
-  // Load user from backend on mount
   useEffect(() => {
-    async function loadUser() {
-      try {
-        setLoading(true);
-        const res = await apiGetCurrentUser();
+  async function loadUser() {
+    try {
+      setLoading(true);
+      const res = await apiGetCurrentUser();
 
-        if (!res.success || !res.user) {
-          throw new Error(res.message || "Failed to load profile");
-        }
-
-        const u = res.user;
-        setUser(u);
-
-        // Normalize gender from backend to match our select options
-        let gender = "";
-        if (typeof u.gender === "string") {
-          const lower = u.gender.toLowerCase();
-          if (lower === "male" || lower === "m") gender = "Male";
-          else if (lower === "female" || lower === "f") gender = "Female";
-          else if (lower === "other") gender = "Other";
-        }
-
-        setForm((prev) => ({
-          ...prev,
-          gender,
-          age: u.age || "",
-          // weight, height, conditions, allergies stay as-is for now
-        }));
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      if (!res.success || !res.user) {
+        throw new Error(res.message || "Failed to load profile");
       }
-    }
 
-    loadUser();
-  }, []);
+      const u = res.user;
+      setUser(u);
+
+      let gender = "";
+      if (typeof u.gender === "string") {
+        const lower = u.gender.toLowerCase();
+        if (lower === "male" || lower === "m") gender = "Male";
+        else if (lower === "female" || lower === "f") gender = "Female";
+        else if (lower === "other") gender = "Other";
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        gender,
+        age: u.age || "",
+        weight: u.weight || "",          
+        height: u.height || "",          
+        conditions: u.conditions || "",  
+        allergies: u.allergies || "",    
+      }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadUser();
+}, []);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const saveChanges = () => {
-    alert("Profile saved! (hook this to backend later)");
-  };
+    const saveChanges = async () => {
+    try {
+      setSaving(true);
+      setError("");
 
-  // Handle loading / error / no user states safely
+      const payload = {
+        weight: form.weight ? Number(form.weight) : undefined,
+        height: form.height ? Number(form.height) : undefined,
+        conditions: form.conditions || "",
+        allergies: form.allergies || "",
+       
+      };
+
+      const res = await apiUpdateProfile(payload);
+
+      if (!res.success) {
+        throw new Error(res.message || "Failed to update profile");
+      }
+
+     
+      const updated = res.user;
+    setUser(updated);
+    setForm((prev) => ({
+      ...prev,
+      weight: updated.weight || "",
+      height: updated.height || "",
+      conditions: updated.conditions || "",
+      allergies: updated.allergies || "",
+    }));
+
+    alert("Profile updated!");
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+
   if (loading) return <div className="profile-page">Loading profile...</div>;
   if (error) return (
     <div className="profile-page" style={{ color: "red" }}>
@@ -71,7 +108,6 @@ export default function Profile({ theme, onThemeSwitch }) {
   );
   if (!user) return <div className="profile-page">No user data</div>;
 
-  // Derive display fields from user
   const displayName = user.fullname || user.username || "User";
   const email = user.email || "example@mail.com";
   const joined = user.createdAt
@@ -105,9 +141,8 @@ export default function Profile({ theme, onThemeSwitch }) {
           </div>
         </div>
 
-        {/* Layout: left (details) + right (stats & settings) */}
         <div className="profile-layout">
-          {/* Personal Details */}
+         
           <div className="card profile-card">
             <h3>Personal Details</h3>
 
@@ -128,7 +163,7 @@ export default function Profile({ theme, onThemeSwitch }) {
                   className="pf-input"
                   name="gender"
                   value={form.gender}
-                  onChange={handleChange}
+                  disabled={true}
                 >
                   <option value="">Select</option>
                   <option value="Male">Male</option>
@@ -144,7 +179,7 @@ export default function Profile({ theme, onThemeSwitch }) {
                   className="pf-input"
                   name="age"
                   value={form.age}
-                  onChange={handleChange}
+                  disabled={true}
                 />
               </div>
 
@@ -191,9 +226,10 @@ export default function Profile({ theme, onThemeSwitch }) {
               </div>
             </div>
 
-            <button className="pf-save-btn" onClick={saveChanges}>
-              Save Changes
-            </button>
+          <button className="pf-save-btn" onClick={saveChanges} disabled={saving}>
+          {saving ? "Saving..." : "Save Changes"}
+          </button>
+
           </div>
 
           {/* Right side: stats + settings */}

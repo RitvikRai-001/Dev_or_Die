@@ -64,6 +64,18 @@ export async function apiGetCapsules() {
 
   return res.json();
 }
+export async function apiUpdateProfile(profileData) {
+  const res = await fetch(`${API_BASE}/user/profile`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(profileData),
+  });
+
+  return res.json();
+}
 
 
 

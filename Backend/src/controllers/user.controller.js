@@ -213,13 +213,48 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     return res.status(401).json({ success: false, message: "Not authenticated" });
   }
 
-  const { _id, username, fullname, email, age, gender, role, createdAt } = req.user;
+const { _id, username, fullname, email, age, gender, role,
+        createdAt, weight, height, conditions, allergies } = req.user;
 
-  res.status(200).json({
+res.status(200).json({
+  success: true,
+  user: { _id, username, fullname, email, age, gender, role,
+          createdAt, weight, height, conditions, allergies },
+})
+});
+
+const updateProfile = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const {
+    weight,
+    height,
+    conditions,
+    allergies,
+  } = req.body;
+
+  const updateData = {
+    weight,
+    height,
+    conditions,
+    allergies,
+  };
+
+
+  const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+    new: true,
+    runValidators: true,
+  }).select("-password");
+
+  return res.status(200).json({
     success: true,
-    user: { _id, username, fullname, email, age, gender, role, createdAt },
+    message: "Profile updated successfully",
+    user: updatedUser,
   });
 });
+
+
+
 
   
   
@@ -228,5 +263,6 @@ export {
     loginUser,
     logoutUser,
     updateAvatar,
-    getCurrentUser
+    getCurrentUser,
+    updateProfile
 }
