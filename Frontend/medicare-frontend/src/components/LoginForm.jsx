@@ -1,34 +1,35 @@
+
 import { useState } from "react";
-import { apiLogin } from "../services/api"; // adjust path
+import { useNavigate } from "react-router-dom";
+import { apiLogin } from "../services/api"; 
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate(); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login form submitted"); 
+    console.log("Login form submitted");
+
     try {
       const data = await apiLogin({ email, password });
-      console.log("Login response:", data); // debug 2
+      console.log("Login response:", data);
 
       if (data.success) {
-  const userDetails = `
-    🎉 Login Successful!
-
-    Username: ${data.user?.username || "N/A"}
-    Full Name: ${data.user?.fullname || "N/A"}
-    Email: ${data.user?.email || "N/A"}
-    Age: ${data.user?.age || "N/A"}
-    Gender: ${data.user?.gender || "N/A"}
-    Role: ${data.user?.role || "N/A"}
-  `;
-
-  alert(userDetails);
-
+       
         if (data.accessToken) {
           localStorage.setItem("token", data.accessToken);
         }
+
+        if (data.user?.username) {
+          localStorage.setItem("username", data.user.username);
+        }
+
+        
+
+       
+        navigate("/home");
       } else {
         alert(data.message || "Login failed");
       }

@@ -1,8 +1,14 @@
 import { useState, useEffect } from "react";
+import { apiSignup } from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 export default function SignupForm() {
+
+    const navigate = useNavigate();
+
     const [form, setForm] = useState({
         username: "",
+        fullname: "",     // ✅ added fullname
         email: "",
         gender: "",
         age: "",
@@ -21,89 +27,101 @@ export default function SignupForm() {
         setForm({ ...form, [field]: value });
     }
 
-    
     function isValidEmail(email) {
-    if (!email) return false;
+        if (!email) return false;
+        if (email.includes(" ")) return false;
 
-    if (email.includes(" ")) return false;
+        const atIndex = email.indexOf("@");
+        if (atIndex <= 0) return false;
 
-    const atIndex = email.indexOf("@");
-    if (atIndex <= 0) return false; 
+        const dotIndex = email.lastIndexOf(".");
+        if (dotIndex <= atIndex + 1) return false;
+        if (dotIndex === email.length - 1) return false;
 
-    const dotIndex = email.lastIndexOf(".");
-    if (dotIndex <= atIndex + 1) return false;
-
-    if (dotIndex === email.length - 1) return false;
-
-    return true;
-}
-
-
-    
-    function isValidPassword(pass) {
-    if (!pass) return false;
-
-    if (pass.length < 3 || pass.length > 20) return false;
-
-    let hasUpper = false;
-    let hasLower = false;
-    let hasDigit = false;
-    let hasSpecial = false;
-
-    const specialChars = "@$!%*?&";
-
-    for (let char of pass) {
-        if (char >= "A" && char <= "Z") hasUpper = true;
-        else if (char >= "a" && char <= "z") hasLower = true;
-        else if (char >= "0" && char <= "9") hasDigit = true;
-        else if (specialChars.includes(char)) hasSpecial = true;
+        return true;
     }
 
-    return hasUpper && hasLower && hasDigit && hasSpecial;
-}
+    function isValidPassword(pass) {
+        if (!pass) return false;
+        if (pass.length < 3 || pass.length > 20) return false;
 
+        let hasUpper = false;
+        let hasLower = false;
+        let hasDigit = false;
+        let hasSpecial = false;
 
-    
+        const specialChars = "@$!%*?&";
+
+        for (let char of pass) {
+            if (char >= "A" && char <= "Z") hasUpper = true;
+            else if (char >= "a" && char <= "z") hasLower = true;
+            else if (char >= "0" && char <= "9") hasDigit = true;
+            else if (specialChars.includes(char)) hasSpecial = true;
+        }
+
+        return hasUpper && hasLower && hasDigit && hasSpecial;
+    }
+
     useEffect(() => {
         let newErrors = { ...errors };
 
-        
         if (form.email.length > 0 && !isValidEmail(form.email)) {
             newErrors.email = "Enter a valid email address.";
-        } else {
-            newErrors.email = "";
-        }
+        } else newErrors.email = "";
 
-       
         if (form.password.length > 0 && !isValidPassword(form.password)) {
             newErrors.password =
                 "Password must be 3–20 characters long with uppercase, lowercase, digit & special character.";
-        } else {
-            newErrors.password = "";
-        }
+        } else newErrors.password = "";
 
-        
         if (form.confirmPassword.length > 0 && form.password !== form.confirmPassword) {
             newErrors.confirmPassword = "Passwords do not match.";
-        } else {
-            newErrors.confirmPassword = "";
-        }
+        } else newErrors.confirmPassword = "";
 
         setErrors(newErrors);
     }, [form.email, form.password, form.confirmPassword]);
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
 
         if (errors.email || errors.password || errors.confirmPassword) {
             return;
         }
 
-        alert("Form submitted successfully!");
+        try {
+            const res = await apiSignup({
+                username: form.username,
+                fullname: form.fullname,     // ✔ sending fullname
+                email: form.email,
+                password: form.password,
+                age: form.age,
+                gender: form.gender,
+                role: form.role,
+            });
+
+            if (res.success) {
+                alert("Signup successful! Please login.");
+                navigate("/");  // redirect to login
+            } else {
+                alert(res.message || "Signup failed");
+            }
+        } catch (err) {
+            console.error("Signup error:", err);
+            alert("Something went wrong.");
+        }
     }
 
     return (
         <form className="form" onSubmit={handleSubmit}>
+
+            {/* FULL NAME FIELD */}
+            <input
+                type="text"
+                placeholder="Full Name"
+                value={form.fullname}
+                onChange={(e) => updateField("fullname", e.target.value)}
+                required
+            />
 
             <input
                 type="text"
