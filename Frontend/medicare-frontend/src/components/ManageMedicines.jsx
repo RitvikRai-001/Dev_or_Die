@@ -3,9 +3,12 @@ import "../styles/manage.css";
 import Toast from "./Toast";
 import { apiCreateCapsule } from "../services/api";
 
-export default function ManageMedicines({ onAddMedication }) {
+export default function ManageMedicines({
+  onAddMedication,
+  onCapsulesUpdated, // 👈 NEW PROP
+}) {
   const [name, setName] = useState("");
-  const [frequency, setFrequency] = useState(1); 
+  const [frequency, setFrequency] = useState(1);
   const [times, setTimes] = useState(["08:00"]);
   const [duration, setDuration] = useState(3);
   const [toast, setToast] = useState("");
@@ -34,9 +37,9 @@ export default function ManageMedicines({ onAddMedication }) {
 
     const payload = {
       name: name.trim(),
-      frequency,         // number (1–4)
+      frequency,       // number (1–4)
       timesOfDay: times,
-      duration,          // number of days
+      duration,        // number of days
     };
 
     const res = await apiCreateCapsule(payload);
@@ -47,7 +50,14 @@ export default function ManageMedicines({ onAddMedication }) {
     }
 
     setToast(`Medication "${name}" added!`);
-    onAddMedication && onAddMedication(res.capsule);
+
+    if (onAddMedication) {
+      onAddMedication(res.capsule);
+    }
+
+    if (onCapsulesUpdated) {
+      onCapsulesUpdated(); // 👈 TRIGGER REFRESH IN HOME
+    }
 
     setName("");
     setFrequency(1);
@@ -69,7 +79,11 @@ export default function ManageMedicines({ onAddMedication }) {
         />
 
         <label>Frequency</label>
-        <select className="input-field" value={frequency} onChange={changeFrequency}>
+        <select
+          className="input-field"
+          value={frequency}
+          onChange={changeFrequency}
+        >
           <option value={1}>Once a day</option>
           <option value={2}>Twice a day</option>
           <option value={3}>3 times a day</option>
@@ -106,7 +120,9 @@ export default function ManageMedicines({ onAddMedication }) {
         />
 
         {error && <p className="error-text">{error}</p>}
-        <button className="primary-btn" type="submit">Save Medication</button>
+        <button className="primary-btn" type="submit">
+          Save Medication
+        </button>
       </form>
 
       {toast && <Toast message={toast} onClose={() => setToast("")} />}

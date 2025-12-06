@@ -64,6 +64,23 @@ const userSchema = new mongoose.Schema(
       type: String, // "sub" from Google token
       index: true,
     },
+    weight: {
+      type: Number, 
+    },
+    height: {
+      type: Number, 
+    },
+    conditions: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    allergies: {
+      type: String,
+      trim: true,
+      default: "",
+    }
+
   },
   { timestamps: true }
 );

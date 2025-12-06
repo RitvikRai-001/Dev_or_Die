@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { apiGetCapsules } from "../services/api";
+import { generateDosesFromCapsule } from "../utils/generateDoses";
+
+import { useEffect, useRef, useState, useCallback } from "react";
 import "../styles/dashboard.css";
 
 import TopNav from "../components/TopNav";
@@ -25,9 +28,10 @@ export default function Home() {
   const switchTheme = (mode) => {
     setTheme(mode);
   };
+
   const addMedication = (medObj) => {
     const { name, schedule: rawSchedule } = medObj;
-    if (!rawSchedule || rawSchedule.length === 0) return;
+    if (!rawSchedule || !rawSchedule.length) return;
 
     const newEntries = rawSchedule.map((entry) => {
       const dt = new Date(entry.time);
@@ -55,6 +59,25 @@ export default function Home() {
       prev.map((d) => (d.id === id ? { ...d, status: "done" } : d))
     );
   };
+
+  const loadCapsules = useCallback(async () => {
+    try {
+      const res = await apiGetCapsules();
+      if (!res.success || !res.capsules) return;
+
+      const allDoses = res.capsules.flatMap((cap) =>
+        generateDosesFromCapsule(cap)
+      );
+
+      setSchedule(allDoses);
+    } catch (err) {
+      console.error("Error loading capsules:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCapsules();
+  }, [loadCapsules]);
 
   const autoUpdateStatusAndNotifications = () => {
     const now = new Date();
@@ -102,7 +125,6 @@ export default function Home() {
     autoUpdateStatusAndNotifications();
     const id = setInterval(autoUpdateStatusAndNotifications, 60000);
     return () => clearInterval(id);
-    
   }, [schedule.length]);
 
   const scrollToManage = () => {
@@ -136,7 +158,10 @@ export default function Home() {
       </div>
 
       <div className="middle-grid" ref={manageRef}>
-        <ManageMedicines onAddMedication={addMedication} />
+        <ManageMedicines
+          onAddMedication={addMedication}
+          onCapsulesUpdated={loadCapsules}
+        />
         <AccuracyCircle doses={schedule} />
         <CalendarWidget doses={schedule} />
       </div>
@@ -146,5 +171,4 @@ export default function Home() {
       </div>
     </div>
   );
-  
 }
