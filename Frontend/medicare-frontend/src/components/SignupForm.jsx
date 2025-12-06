@@ -115,19 +115,20 @@ export default function SignupForm() {
         <form className="form" onSubmit={handleSubmit}>
 
             {/* FULL NAME FIELD */}
-            <input
-                type="text"
-                placeholder="Full Name"
-                value={form.fullname}
-                onChange={(e) => updateField("fullname", e.target.value)}
-                required
-            />
+            
 
             <input
                 type="text"
                 placeholder="Username"
                 value={form.username}
                 onChange={(e) => updateField("username", e.target.value)}
+                required
+            />
+            <input
+                type="text"
+                placeholder="Full Name"
+                value={form.fullname}
+                onChange={(e) => updateField("fullname", e.target.value)}
                 required
             />
 
@@ -192,6 +193,18 @@ export default function SignupForm() {
 
             <button type="submit" className="form-btn">
                 Sign Up
+            </button>
+            <button
+                type="button"
+                className="google-btn"
+                
+            >
+                <img
+                    src="https://developers.google.com/identity/images/g-logo.png"
+                    alt="Google"
+                    className="google-icon"
+                />
+                Sign in with Google
             </button>
         </form>
     );

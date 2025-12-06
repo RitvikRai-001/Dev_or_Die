@@ -58,6 +58,18 @@ export default function LoginForm() {
       />
 
       <button type="submit" className="form-btn">Login</button>
+      <button
+                type="button"
+                className="google-btn"
+                
+            >
+                <img
+                    src="https://developers.google.com/identity/images/g-logo.png"
+                    alt="Google"
+                    className="google-icon"
+                />
+                Login with Google
+            </button>
     </form>
   );
 }

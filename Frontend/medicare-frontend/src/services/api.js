@@ -48,4 +48,12 @@ export async function apiCreateCapsule(capsuleData) {
 
   return res.json();
 }
+export async function apiGetCurrentUser() {
+  const res = await fetch(`${API_BASE}/user/me`, {
+    method: "GET",
+    credentials: "include",  
+  });
+  return res.json();
+}
+
 

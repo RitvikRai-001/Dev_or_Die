@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../styles/profile.css";
 import TopNav from "../components/TopNav";
+import { apiGetCurrentUser } from "../services/api";
 
 export default function Profile({ theme, onThemeSwitch }) {
-  const username = localStorage.getItem("username") || "User";
-  const email = localStorage.getItem("email") || "example@mail.com";
-
+  const [user, setUser] = useState(null);
   const [form, setForm] = useState({
     gender: "",
     age: "",
@@ -14,29 +13,90 @@ export default function Profile({ theme, onThemeSwitch }) {
     conditions: "",
     allergies: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Load user from backend on mount
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        setLoading(true);
+        const res = await apiGetCurrentUser();
+
+        if (!res.success || !res.user) {
+          throw new Error(res.message || "Failed to load profile");
+        }
+
+        const u = res.user;
+        setUser(u);
+
+        // Normalize gender from backend to match our select options
+        let gender = "";
+        if (typeof u.gender === "string") {
+          const lower = u.gender.toLowerCase();
+          if (lower === "male" || lower === "m") gender = "Male";
+          else if (lower === "female" || lower === "f") gender = "Female";
+          else if (lower === "other") gender = "Other";
+        }
+
+        setForm((prev) => ({
+          ...prev,
+          gender,
+          age: u.age || "",
+          // weight, height, conditions, allergies stay as-is for now
+        }));
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadUser();
+  }, []);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const saveChanges = () => {
-    alert("Profile saved!");
+    alert("Profile saved! (hook this to backend later)");
   };
+
+  // Handle loading / error / no user states safely
+  if (loading) return <div className="profile-page">Loading profile...</div>;
+  if (error) return (
+    <div className="profile-page" style={{ color: "red" }}>
+      {error}
+    </div>
+  );
+  if (!user) return <div className="profile-page">No user data</div>;
+
+  // Derive display fields from user
+  const displayName = user.fullname || user.username || "User";
+  const email = user.email || "example@mail.com";
+  const joined = user.createdAt
+    ? new Date(user.createdAt).toLocaleString("default", {
+        month: "short",
+        year: "numeric",
+      })
+    : "—";
 
   return (
     <div className="profile-page">
-      <TopNav username={username} onThemeSwitch={onThemeSwitch} />
+      <TopNav username={displayName} onThemeSwitch={onThemeSwitch} />
 
       <div className="profile-content">
+        {/* Top identity card */}
         <div className="card profile-card">
           <div className="profile-identity-card">
             <div className="profile-avatar">
-              {username.charAt(0).toUpperCase()}
+              {displayName.charAt(0).toUpperCase()}
             </div>
 
             <div className="profile-main-info">
-              <p className="profile-name">{username}</p>
+              <p className="profile-name">{displayName}</p>
               <p className="profile-email">{email}</p>
-              <p className="profile-joined">Joined: Dec 2025</p>
+              <p className="profile-joined">Joined: {joined}</p>
             </div>
 
             <button className="profile-edit-photo-btn">
@@ -44,14 +104,17 @@ export default function Profile({ theme, onThemeSwitch }) {
             </button>
           </div>
         </div>
+
+        {/* Layout: left (details) + right (stats & settings) */}
         <div className="profile-layout">
+          {/* Personal Details */}
           <div className="card profile-card">
             <h3>Personal Details</h3>
 
             <div className="profile-form-grid">
               <div className="pf-field">
                 <label>Full Name</label>
-                <input className="pf-input" value={username} disabled />
+                <input className="pf-input" value={displayName} disabled />
               </div>
 
               <div className="pf-field">
@@ -132,6 +195,8 @@ export default function Profile({ theme, onThemeSwitch }) {
               Save Changes
             </button>
           </div>
+
+          {/* Right side: stats + settings */}
           <div>
             <div className="card profile-card profile-stats-card">
               <h3>Medication Statistics</h3>
@@ -158,12 +223,16 @@ export default function Profile({ theme, onThemeSwitch }) {
                 </div>
               </div>
             </div>
+
             <div className="card profile-card profile-settings-card">
               <h3>Account Settings</h3>
+
               <div className="setting-row">
                 <div>
                   <p className="setting-title">Theme</p>
-                  <p className="setting-sub">Switch between light and dark.</p>
+                  <p className="setting-sub">
+                    Switch between light and dark.
+                  </p>
                 </div>
 
                 <div className="theme-toggle-inline">
@@ -182,6 +251,7 @@ export default function Profile({ theme, onThemeSwitch }) {
                   </button>
                 </div>
               </div>
+
               <div className="setting-row">
                 <div>
                   <p className="setting-title">Notifications</p>
@@ -192,7 +262,7 @@ export default function Profile({ theme, onThemeSwitch }) {
 
                 <button className="toggle-btn off">Off</button>
               </div>
-=
+
               <div className="setting-row">
                 <div>
                   <p className="setting-title danger">Delete Account</p>

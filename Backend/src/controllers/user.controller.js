@@ -207,11 +207,26 @@ const loginUser = asyncHandler(async (req, res) => {
       user: updatedUser
     });
   });
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+
+  const { _id, username, fullname, email, age, gender, role, createdAt } = req.user;
+
+  res.status(200).json({
+    success: true,
+    user: { _id, username, fullname, email, age, gender, role, createdAt },
+  });
+});
+
   
   
 export {
     registerUser,
     loginUser,
     logoutUser,
-    updateAvatar
+    updateAvatar,
+    getCurrentUser
 }
