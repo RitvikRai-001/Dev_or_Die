@@ -37,3 +37,15 @@ export async function apiSignup({
 
   return res.json();
 }
+
+export async function apiCreateCapsule(capsuleData) {
+  const res = await fetch(`${API_BASE}/capsule`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", 
+    body: JSON.stringify(capsuleData),
+  });
+
+  return res.json();
+}
+

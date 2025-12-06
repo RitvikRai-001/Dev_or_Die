@@ -14,18 +14,14 @@ const capsuleSchema = new mongoose.Schema(
       trim: true
     },
 
-    dosage: {
-      type: String,
-      required: true
+    
+    dosesPerDay: {
+      type: Number,
+      required: true,
+      min: 1
     },
 
-    frequency: {
-      type: String,
-      enum: ["daily", "weekly", "custom"],
-      default: "daily",
-      required: true
-    },
-
+    
     timesOfDay: [
       {
         type: String,
