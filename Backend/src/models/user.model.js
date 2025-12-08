@@ -33,14 +33,22 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     age: {
-      type: Number,
-      required:true
+    type: Number,
+    required: function () {
+      // only required for manually registered users
+      return this.provider === "local";
     },
+  },
+
+
     gender: {
-      type: String,
-      enum: ["male", "female", "other"],
-      required:true
+    type: String,
+    enum: ["male", "female", "other", "prefer_not_to_say"],
+    required: function () {
+      return this.provider === "local";
     },
+  },
+
     avatar:{
       type: String, // cloudinary url 
       required: false,
@@ -79,7 +87,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "",
+    },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
     }
+
 
   },
   { timestamps: true }

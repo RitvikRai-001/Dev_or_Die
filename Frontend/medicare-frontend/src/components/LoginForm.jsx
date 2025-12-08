@@ -1,12 +1,11 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiLogin } from "../services/api"; 
+import { apiLogin } from "../services/api";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,19 +15,14 @@ export default function LoginForm() {
       const data = await apiLogin({ email, password });
       console.log("Login response:", data);
 
-      if (data.success) {
-       
+      if (data.user) {
+        alert("Login successful");
+
         if (data.accessToken) {
           localStorage.setItem("token", data.accessToken);
         }
+        localStorage.setItem("user", JSON.stringify(data.user));
 
-        if (data.user?.username) {
-          localStorage.setItem("username", data.user.username);
-        }
-
-        
-
-       
         navigate("/home");
       } else {
         alert(data.message || "Login failed");
@@ -57,19 +51,9 @@ export default function LoginForm() {
         required
       />
 
-      <button type="submit" className="form-btn">Login</button>
-      <button
-                type="button"
-                className="google-btn"
-                
-            >
-                <img
-                    src="https://developers.google.com/identity/images/g-logo.png"
-                    alt="Google"
-                    className="google-icon"
-                />
-                Login with Google
-            </button>
+      <button type="submit" className="form-btn">
+        Login
+      </button>
     </form>
   );
 }

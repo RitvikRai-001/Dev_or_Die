@@ -78,4 +78,26 @@ export async function apiUpdateProfile(profileData) {
 }
 
 
+export async function apiGoogleLogin(idToken) {
+  const res = await fetch(`${API_BASE}/auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include", // keep same pattern as others if you later set cookies
+    body: JSON.stringify({ idToken }),
+  });
+
+  return res.json();
+}
+export async function apiLogout() {
+  const res = await fetch(`${API_BASE}/user/logout`, {
+    method: "POST",
+    credentials: "include",  // send cookies so backend can clear them
+  });
+
+  return res.json();
+}
+
+
+
+
 

@@ -71,7 +71,10 @@ const registerUser=asyncHandler(async (req ,res)=>{
         gender,
         role,
         password: password,
-        provider: "local"
+        provider: "local",
+        isProfileComplete: true,
+        
+
       
 
       })
@@ -210,35 +213,75 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const getCurrentUser = asyncHandler(async (req, res) => {
   if (!req.user) {
-    return res.status(401).json({ success: false, message: "Not authenticated" });
+    return res
+      .status(401)
+      .json({ success: false, message: "Not authenticated" });
   }
 
-const { _id, username, fullname, email, age, gender, role,
-        createdAt, weight, height, conditions, allergies } = req.user;
+  const {
+    _id,
+    username,
+    fullname,
+    email,
+    age,
+    gender,
+    role,
+    createdAt,
+    weight,
+    height,
+    conditions,
+    allergies,
+    provider,
+    isProfileComplete,
+  } = req.user;
 
-res.status(200).json({
-  success: true,
-  user: { _id, username, fullname, email, age, gender, role,
-          createdAt, weight, height, conditions, allergies },
-})
+  res.status(200).json({
+    success: true,
+    user: {
+      _id,
+      username,
+      fullname,
+      email,
+      age,
+      gender,
+      role,
+      createdAt,
+      weight,
+      height,
+      conditions,
+      allergies,
+      provider,
+      isProfileComplete,   // ⭐ now frontend sees true/false correctly
+    },
+  });
 });
+
 
 const updateProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const {
-    weight,
+const {
+    fullname,
+    age,
+    gender,
     height,
+    weight,
     conditions,
     allergies,
   } = req.body;
 
   const updateData = {
-    weight,
+    fullname,
+    age,
+    gender,
     height,
+    weight,
     conditions,
     allergies,
+
   };
+  updateData.isProfileComplete = true;
+
 
 
   const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
@@ -252,6 +295,47 @@ const updateProfile = asyncHandler(async (req, res) => {
     user: updatedUser,
   });
 });
+// const completeProfile = asyncHandler(async (req, res) => {
+//   const userId = req.user._id; // from auth middleware
+
+//   const {
+//     age,
+//     gender,
+//     height,
+//     weight,
+//     conditions,
+//     allergies,
+//   } = req.body;
+
+//   const updated = await User.findByIdAndUpdate(
+//     userId,
+//     {
+//       age,
+//       gender,
+//       height,
+//       weight,
+//       conditions,
+//       allergies,
+//       isProfileComplete: true,
+//     },
+//     { new: true }
+//   ).select("-password -refreshToken");
+
+//   if (!updated) {
+//     return res.status(404).json({
+//       success: false,
+//       message: "User not found",
+//     });
+//   }
+
+//   res.json({
+//     success: true,
+//     message: "Profile completed successfully",
+//     user: updated,
+//   });
+// });
+
+
 
 
 
@@ -264,5 +348,6 @@ export {
     logoutUser,
     updateAvatar,
     getCurrentUser,
-    updateProfile
+    updateProfile,
+    // completeProfile
 }

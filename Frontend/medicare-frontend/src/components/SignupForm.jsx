@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { apiSignup } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
-export default function SignupForm() {
+export default function SignupForm({ onSignupSuccess }) {
 
     const navigate = useNavigate();
 
@@ -101,7 +101,7 @@ export default function SignupForm() {
 
             if (res.success) {
                 alert("Signup successful! Please login.");
-                navigate("/");  // redirect to login
+                  if (onSignupSuccess) onSignupSuccess();  // redirect to login
             } else {
                 alert(res.message || "Signup failed");
             }
@@ -194,18 +194,7 @@ export default function SignupForm() {
             <button type="submit" className="form-btn">
                 Sign Up
             </button>
-            <button
-                type="button"
-                className="google-btn"
-                
-            >
-                <img
-                    src="https://developers.google.com/identity/images/g-logo.png"
-                    alt="Google"
-                    className="google-icon"
-                />
-                Sign in with Google
-            </button>
+            
         </form>
     );
 }

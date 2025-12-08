@@ -17,8 +17,24 @@ export default function Home() {
   const [theme, setTheme] = useState("light");
   const [schedule, setSchedule] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [username, setUsername] = useState("User");
 
-  const username = localStorage.getItem("username") || "User";
+
+    useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      try {
+        const u = JSON.parse(stored);
+
+        setUsername(u.fullname || u.username || "User");
+      } catch (err) {
+        console.error("Error parsing user from localStorage:", err);
+      }
+    }
+  }, []);
+
+
+
   const manageRef = useRef(null);
 
   useEffect(() => {

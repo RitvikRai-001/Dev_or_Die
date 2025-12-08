@@ -11,6 +11,7 @@ router.route("/logout").post(verifyJWT,logoutUser)
 router.route("/me").get(verifyJWT,getCurrentUser)
 router.route("/profile").put(verifyJWT,updateProfile)
 
+
 router.patch("/avatar",verifyJWT, 
     upload.single("avatar"),
     updateAvatar            

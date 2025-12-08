@@ -277,3 +277,17 @@
     align-self: flex-start;
   }
 }
+
+
+.profile-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.profile-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}

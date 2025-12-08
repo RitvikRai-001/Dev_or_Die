@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../styles/topnav.css";
 import { useNavigate } from "react-router-dom";
+import { apiLogout } from "../services/api";
 
 
 export default function TopNav({
@@ -15,10 +16,20 @@ export default function TopNav({
 
   const navigate = useNavigate();
 
-  const handleSignOut = () => {
-    localStorage.removeItem("username");
-    navigate("/"); 
-  };
+const handleSignOut = async () => {
+  try {
+    await apiLogout(); 
+  } catch (error) {
+    console.error("Logout error:", error);
+  } finally {
+   
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+
+    navigate("/", { replace: true });
+  }
+};
 
   const handleProfileClick = () => {
     navigate("/profile", { state: { schedule } });
