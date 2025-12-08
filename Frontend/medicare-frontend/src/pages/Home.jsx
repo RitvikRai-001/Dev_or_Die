@@ -1,6 +1,4 @@
-import { apiGetCapsules } from "../services/api";
-import { generateDosesFromCapsule } from "../utils/generateDoses";
-
+import { apiGetDoseLogs, apiMarkDoseTaken } from "../services/api";
 import { useEffect, useRef, useState, useCallback } from "react";
 import "../styles/dashboard.css";
 
@@ -15,7 +13,7 @@ import AccuracyCircle from "../components/AccuracyCircle";
 
 export default function Home() {
   const [theme, setTheme] = useState("light");
-  const [schedule, setSchedule] = useState([]);
+  const [schedule, setSchedule] = useState([]); // dose logs from backend
   const [notifications, setNotifications] = useState([]);
   const [username, setUsername] = useState("User");
 
@@ -37,112 +35,84 @@ export default function Home() {
 
   const manageRef = useRef(null);
 
+  // -----------------------------
+  // THEME SWITCHER
+  // -----------------------------
   useEffect(() => {
     document.body.className = theme;
   }, [theme]);
 
-  const switchTheme = (mode) => {
-    setTheme(mode);
-  };
+  const switchTheme = (mode) => setTheme(mode);
 
-  const addMedication = (medObj) => {
-    const { name, schedule: rawSchedule } = medObj;
-    if (!rawSchedule || !rawSchedule.length) return;
-
-    const newEntries = rawSchedule.map((entry) => {
-      const dt = new Date(entry.time);
-
-      const yyyy = dt.getFullYear();
-      const mm = String(dt.getMonth() + 1).padStart(2, "0");
-      const dd = String(dt.getDate()).padStart(2, "0");
-      const hh = String(dt.getHours()).padStart(2, "0");
-      const min = String(dt.getMinutes()).padStart(2, "0");
-
-      return {
-        id: `${name}-${yyyy}${mm}${dd}-${hh}${min}-${Math.random()}`,
-        name,
-        date: `${yyyy}-${mm}-${dd}`,
-        time: `${hh}:${min}`,
-        status: entry.status || "pending",
-      };
-    });
-
-    setSchedule((prev) => [...prev, ...newEntries]);
-  };
-
-  const markDoseTaken = (id) => {
-    setSchedule((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, status: "done" } : d))
-    );
-  };
-
-  const loadCapsules = useCallback(async () => {
+  // -------------------------------------------------------------------
+  // MARK DOSE AS TAKEN → Backend → Reload Schedule
+  // -------------------------------------------------------------------
+  const markDoseTaken = async ({ capsuleId, scheduledTime }) => {
     try {
-      const res = await apiGetCapsules();
-      if (!res.success || !res.capsules) return;
+      const res = await apiMarkDoseTaken(capsuleId, scheduledTime);
 
-      const allDoses = res.capsules.flatMap((cap) =>
-        generateDosesFromCapsule(cap)
-      );
+      if (!res.success) {
+        alert(res.message || "Failed to mark dose as taken");
+        return;
+      }
 
-      setSchedule(allDoses);
+      window.location.reload();//reloads the page
+
     } catch (err) {
-      console.error("Error loading capsules:", err);
+      console.error("Error marking dose taken:", err);
+    }
+  };
+
+  // -------------------------------------------------------------------
+  // LOAD ALL DOSE LOGS FROM BACKEND
+  // -------------------------------------------------------------------
+  const loadSchedule = useCallback(async () => {
+    try {
+      const res = await apiGetDoseLogs();
+
+      if (!res.success || !res.logs) return;
+
+      // Convert timestamps → readable UI objects
+      const cleaned = res.logs.map((log) => {
+        const dt = new Date(log.scheduledTime);
+
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth() + 1).padStart(2, "0");
+        const dd = String(dt.getDate()).padStart(2, "0");
+        const hh = String(dt.getHours()).padStart(2, "0");
+        const min = String(dt.getMinutes()).padStart(2, "0");
+
+        return {
+          capsuleId: log.capsuleId?._id,
+          name: log.capsuleId?.name || "Medicine",
+          date: `${yyyy}-${mm}-${dd}`,
+          time: `${hh}:${min}`,
+          status: log.status,
+          scheduledTime: log.scheduledTime,
+        };
+      });
+
+      // Sort oldest → newest
+      const sorted = cleaned.sort((a, b) => {
+        const da = new Date(`${a.date}T${a.time}:00`);
+        const db = new Date(`${b.date}T${b.time}:00`);
+        return da - db;
+      });
+
+      setSchedule(sorted);
+    } catch (err) {
+      console.error("Error loading dose logs:", err);
     }
   }, []);
 
+  // Load schedule on page load
   useEffect(() => {
-    loadCapsules();
-  }, [loadCapsules]);
+    loadSchedule();
+  }, [loadSchedule]);
 
-  const autoUpdateStatusAndNotifications = () => {
-    const now = new Date();
-
-    const updated = schedule.map((d) => {
-      if (d.status === "done") return d;
-
-      const doseDateTime = new Date(`${d.date}T${d.time}:00`);
-      const diffMinutes = (now - doseDateTime) / 60000;
-
-      if (diffMinutes > 30) {
-        return { ...d, status: "missed" };
-      }
-      return d;
-    });
-
-    const newNotifications = updated
-      .map((d) => {
-        const doseDateTime = new Date(`${d.date}T${d.time}:00`);
-        const diffMinutes = (doseDateTime - now) / 60000;
-
-        if (d.status === "missed") {
-          return {
-            type: "missed",
-            message: `${d.name} at ${d.time} missed`,
-          };
-        }
-
-        if (Math.abs(diffMinutes) <= 10 && d.status === "pending") {
-          return {
-            type: "due",
-            message: `${d.name} at ${d.time} is due now`,
-          };
-        }
-
-        return null;
-      })
-      .filter(Boolean);
-
-    setSchedule(updated);
-    setNotifications(newNotifications);
-  };
-
-  useEffect(() => {
-    autoUpdateStatusAndNotifications();
-    const id = setInterval(autoUpdateStatusAndNotifications, 60000);
-    return () => clearInterval(id);
-  }, [schedule.length]);
-
+  // -------------------------------------------------------------------
+  // SCROLL TO MANAGE SECTION
+  // -------------------------------------------------------------------
   const scrollToManage = () => {
     if (manageRef.current) {
       manageRef.current.scrollIntoView({
@@ -168,6 +138,7 @@ export default function Home() {
         <div className="left-side">
           <CapsuleList doses={schedule} onMarkTaken={markDoseTaken} />
         </div>
+
         <div className="right-side">
           <ChatBox />
         </div>
@@ -175,10 +146,10 @@ export default function Home() {
 
       <div className="middle-grid" ref={manageRef}>
         <ManageMedicines
-          onAddMedication={addMedication}
-          onCapsulesUpdated={loadCapsules}
+          onAddMedication={loadSchedule} // after saving capsule → reload
+          onCapsulesUpdated={loadSchedule}
         />
-        <AccuracyCircle doses={schedule} />
+        <AccuracyCircle  />
         <CalendarWidget doses={schedule} />
       </div>
 

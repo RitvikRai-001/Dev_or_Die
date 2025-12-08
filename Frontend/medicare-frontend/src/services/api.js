@@ -101,3 +101,44 @@ export async function apiLogout() {
 
 
 
+// --------------------------------------------------
+// MARK DOSE AS TAKEN (frontend → backend)
+// --------------------------------------------------
+export async function apiMarkDoseTaken(capsuleId, scheduledTime) {
+  const res = await fetch(`${API_BASE}/doseLog/take/${capsuleId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ scheduledTime }),
+  });
+
+  return res.json();
+}
+
+// --------------------------------------------------
+// GET DOSE LOGS (timeline)
+// --------------------------------------------------
+export async function apiGetDoseLogs() {
+  const res = await fetch(`${API_BASE}/doseLog/timeline`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  return res.json();
+}
+
+// --------------------------------------------------
+// GET ADHERENCE STATS (% taken vs missed)
+// --------------------------------------------------
+export async function apiGetAdherence(days = 30) {
+  const res = await fetch(`${API_BASE}/doseLog/adherence?days=${days}`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  return res.json();
+}
+
+
+
+

@@ -3,9 +3,49 @@ import "../styles/manage.css";
 import Toast from "./Toast";
 import { apiCreateCapsule } from "../services/api";
 
+// Time Warning Modal Component
+function TimeWarningModal({ pastTimes, onConfirm, onCancel }) {
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content time-warning-modal">
+        <div className="modal-header warning">
+          <span className="warning-icon">⚠️</span>
+          <h3>Time Already Passed</h3>
+        </div>
+        
+        <p className="modal-description">
+          The following dose time(s) have already passed today:
+        </p>
+        
+        <div className="past-times-list">
+          {pastTimes.map((time, idx) => (
+            <div key={idx} className="past-time-item">
+              🕐 {time}
+            </div>
+          ))}
+        </div>
+
+        <p className="modal-info">
+          These doses will be marked as <strong>missed</strong> for today. 
+          Would you like to continue or adjust the times?
+        </p>
+
+        <div className="modal-actions">
+          <button onClick={onCancel} className="btn-secondary">
+            Adjust Times
+          </button>
+          <button onClick={onConfirm} className="btn-primary">
+            Continue Anyway
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ManageMedicines({
   onAddMedication,
-  onCapsulesUpdated, // 👈 NEW PROP
+  onCapsulesUpdated,
 }) {
   const [name, setName] = useState("");
   const [frequency, setFrequency] = useState(1);
@@ -13,6 +53,8 @@ export default function ManageMedicines({
   const [duration, setDuration] = useState(3);
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [pastTimes, setPastTimes] = useState([]);
 
   const changeFrequency = (e) => {
     const f = Number(e.target.value);
@@ -26,26 +68,34 @@ export default function ManageMedicines({
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  // Helper function to check if times have passed
+  const checkPastTimes = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    const passed = times.filter(time => {
+      const [hour, minute] = time.split(":").map(Number);
+      return hour < currentHour || (hour === currentHour && minute <= currentMinute);
+    });
 
-    if (!name.trim()) {
-      setError("Medication name is required.");
-      return;
-    }
+    return passed;
+  };
 
+  // Function to actually submit the capsule
+  const submitCapsule = async () => {
     const payload = {
       name: name.trim(),
-      frequency,       // number (1–4)
+      frequency,
       timesOfDay: times,
-      duration,        // number of days
+      duration,
     };
 
     const res = await apiCreateCapsule(payload);
 
     if (!res.success) {
       setError(res.message || "Something went wrong");
+      setShowWarningModal(false);
       return;
     }
 
@@ -56,13 +106,37 @@ export default function ManageMedicines({
     }
 
     if (onCapsulesUpdated) {
-      onCapsulesUpdated(); // 👈 TRIGGER REFRESH IN HOME
+      onCapsulesUpdated();
     }
 
+    // Reset form
     setName("");
     setFrequency(1);
     setTimes(["08:00"]);
     setDuration(3);
+    setShowWarningModal(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!name.trim()) {
+      setError("Medication name is required.");
+      return;
+    }
+
+    // Check for past times
+    const passed = checkPastTimes();
+    
+    if (passed.length > 0) {
+      // Show warning modal
+      setPastTimes(passed);
+      setShowWarningModal(true);
+    } else {
+      // All times are in the future, proceed directly
+      await submitCapsule();
+    }
   };
 
   return (
@@ -124,6 +198,14 @@ export default function ManageMedicines({
           Save Medication
         </button>
       </form>
+
+      {showWarningModal && (
+        <TimeWarningModal
+          pastTimes={pastTimes}
+          onConfirm={submitCapsule}
+          onCancel={() => setShowWarningModal(false)}
+        />
+      )}
 
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </div>

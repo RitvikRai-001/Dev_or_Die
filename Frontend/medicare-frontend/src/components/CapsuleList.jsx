@@ -1,10 +1,10 @@
 import "../styles/capsules.css";
 
-export default function CapsuleList({ doses, onMarkTaken }) {
+export default function CapsuleList({ doses = [], onMarkTaken }) {
   const now = new Date();
 
   const upcoming = doses
-    .filter((d) => d.status === "pending")
+    .filter((d) => d.status === "scheduled")
     .filter((d) => {
       const dt = new Date(`${d.date}T${d.time}:00`);
       return dt >= now;
@@ -24,8 +24,8 @@ export default function CapsuleList({ doses, onMarkTaken }) {
         <p className="no-med">No upcoming medications scheduled.</p>
       )}
 
-      {upcoming.map((dose) => (
-        <div key={dose.id} className={`capsule-item ${dose.status}`}>
+      {upcoming.map((dose, index) => (
+        <div key={index} className={`capsule-item ${dose.status}`}>
           <div className="capsule-info">
             <p className="capsule-name">{dose.name}</p>
             <span className="capsule-time">
@@ -38,10 +38,16 @@ export default function CapsuleList({ doses, onMarkTaken }) {
               {dose.status}
             </span>
 
-            {dose.status === "pending" && (
+            {/* FIXED: Ensure capsuleId exists */}
+            {dose.status === "scheduled" && dose.capsuleId && (
               <button
                 className="take-btn"
-                onClick={() => onMarkTaken(dose.id)}
+                onClick={() =>
+                  onMarkTaken({
+                    capsuleId: dose.capsuleId,
+                    scheduledTime: `${dose.date}T${dose.time}:00`,
+                  })
+                }
               >
                 Mark Taken
               </button>

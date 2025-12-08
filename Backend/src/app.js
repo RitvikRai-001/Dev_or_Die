@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 
 
+
 const app=express();
 
 
@@ -19,7 +20,8 @@ app.use(cors({
 //services import
 
 // import "./services/reminder.service.js"
-
+import "./services/autoMiss.service.js";
+import "./services/doseScheduler.service.js";
 
 //routes import
 import userAuthRouter from "./routes/auth.route.js"

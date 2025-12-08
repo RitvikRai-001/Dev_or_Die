@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { 
     logDoseTake,
-    logDoseMiss,
     getRangerTimeline,
     getAdherenceStats
 } from '../controllers/doseLog.controller.js'; 
@@ -12,8 +11,7 @@ const router = Router();
 
 router.use(verifyJWT);         
 
-router.route('/take/:capsuleId').post(verifyJWT,logDoseTake); 
-router.route('/miss/:capsuleId').post(verifyJWT, logDoseMiss); 
+router.route('/take/:capsuleId').post(verifyJWT,logDoseTake);  
 router.route('/timeline').get(verifyJWT, getRangerTimeline); 
 router.route('/adherence').get(verifyJWT, getAdherenceStats); 
 

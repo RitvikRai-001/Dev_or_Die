@@ -1,15 +1,17 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { Capsule } from "../models/capsule.model.js"; 
+import { Capsule } from "../models/capsule.model.js";
+import { DoseLog } from "../models/doseLog.model.js";
 
-
-//to create capsule
+// ------------------------------
+// CREATE CAPSULE
+// ------------------------------
 const createCapsule = asyncHandler(async (req, res) => {
   const {
-    name,          // "Paracetamol 500mg"
-    frequency,     // text: "Once a day", "Twice a day", "3 times a day", "4 times a day"
-    timesOfDay,    // ["08:00", "20:00", ...]
+    name,
+    frequency,     // numeric 1–4
+    timesOfDay,    // array like ["08:00","14:00"]
     duration,      // number of days
-    instructions,  // optional
+    instructions,
   } = req.body;
 
   if (!name || !frequency || !timesOfDay || !duration) {
@@ -17,116 +19,125 @@ const createCapsule = asyncHandler(async (req, res) => {
   }
 
   const dosesPerDay = Number(frequency);
-
-if (!dosesPerDay || dosesPerDay < 1 || dosesPerDay > 4) {
-  throw new Error("Invalid frequency option.");
-}
-
-
-
-
-
-  const totalDays = Number(duration);
-  if (Number.isNaN(totalDays) || totalDays < 1) {
-    throw new Error("Duration must be at least 1 day.");
+  if (!dosesPerDay || dosesPerDay < 1 || dosesPerDay > 4) {
+    throw new Error("Invalid frequency option.");
   }
 
   if (!Array.isArray(timesOfDay) || timesOfDay.length !== dosesPerDay) {
-    throw new Error("timesOfDay count must match the selected frequency.");
+    throw new Error("timesOfDay count must match frequency.");
   }
 
-  // Start today at midnight
+  // Start date = today 00:00
   const startDate = new Date();
   startDate.setHours(0, 0, 0, 0);
 
-  // End after (duration - 1) days
+  // End date
   const endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + (totalDays - 1));
+  endDate.setDate(endDate.getDate() + (duration - 1));
 
   const rangerId = req.user._id;
 
-  const newCapsule = await Capsule.create({
+  // Create capsule entry
+  const capsule = await Capsule.create({
     rangerId,
     name,
-    dosesPerDay,       // numeric
-    timesOfDay,        // array of strings
+    dosesPerDay,
+    timesOfDay,
     startDate,
     endDate,
     instructions: instructions || "",
   });
+  // -----------------------------
+// CREATE TODAY'S DOSELOGS (ALL TIMES)
+// -----------------------------
+const now = new Date();
+const todayDoseLogs = [];
 
-  return res.status(201).json({
-    success: true,
-    message: "Capsule schedule created successfully",
-    capsule: newCapsule,
+timesOfDay.forEach((t) => {
+  const [hour, minute] = t.split(":").map(Number);
+
+  // Create today's date correctly in local timezone
+  const scheduled = new Date();
+  scheduled.setHours(hour, minute, 0, 0);
+
+  // Create DoseLog for ALL times
+  // Mark as "missed" if time has passed, "scheduled" if upcoming
+  todayDoseLogs.push({
+    rangerId,
+    capsuleId: capsule._id,
+    scheduledTime: scheduled,
+    status: scheduled < now ? "missed" : "scheduled",
   });
 });
 
 
-//to get all capsules related to user
+  if (todayDoseLogs.length > 0) {
+    await DoseLog.insertMany(todayDoseLogs);
+    const scheduledCount = todayDoseLogs.filter(d => d.status === "scheduled").length;
+    const missedCount = todayDoseLogs.filter(d => d.status === "missed").length;
+    console.log(`✅ Created today's DoseLogs: ${scheduledCount} scheduled, ${missedCount} missed`);
+  }
+
+  return res.status(201).json({
+    success: true,
+    message: "Capsule created successfully",
+    capsule,
+  });
+});
+
+// ------------------------------
+// GET USER CAPSULES
+// ------------------------------
 const getRangerCapsules = asyncHandler(async (req, res) => {
-    
-    const rangerId = req.user._id;
-    
-        const capsules = await Capsule.find({ rangerId }).sort('startDate');
+  const capsules = await Capsule.find({ rangerId: req.user._id }).sort("startDate");
 
-        return res.status(200).json({
-            success: true,
-            results: capsules.length,
-            capsules: capsules
-        });
-    } 
-);
+  return res.status(200).json({
+    success: true,
+    results: capsules.length,
+    capsules,
+  });
+});
 
-//to update capsule
+// ------------------------------
+// UPDATE CAPSULE
+// ------------------------------
 const updateCapsule = asyncHandler(async (req, res) => {
-    const capsuleId = req.params.id;
-    const rangerId = req.user._id;
+  const capsule = await Capsule.findOneAndUpdate(
+    { _id: req.params.id, rangerId: req.user._id },
+    req.body,
+    { new: true, runValidators: true }
+  );
 
-  
-        const updatedCapsule = await Capsule.findOneAndUpdate(
-            { _id: capsuleId, rangerId }, 
-            req.body,                     
-            { new: true, runValidators: true } 
-        );
+  if (!capsule) throw new Error("Capsule not found or unauthorized.");
 
-        // 2. Check if the capsule was found and updated
-        if (!updatedCapsule) {
-            throw new Error("Capsule not found or you are not authorized to update it.");
-        }
+  return res.status(200).json({
+    success: true,
+    message: "Capsule updated successfully",
+    capsule,
+  });
+});
 
-        return res.status(200).json({
-            success: true,
-            message: "Capsule schedule updated successfully",
-            capsule: updatedCapsule
-        });
-
-    } );
-
-//to delete
+// ------------------------------
+// DELETE CAPSULE
+// ------------------------------
 const deleteCapsule = asyncHandler(async (req, res) => {
-    const capsuleId = req.params.id;
-    const rangerId = req.user._id;
+  const capsule = await Capsule.findOneAndDelete({
+    _id: req.params.id,
+    rangerId: req.user._id,
+  });
 
- 
-        const deletedCapsule = await Capsule.findOneAndDelete({ _id: capsuleId, rangerId });
+  if (!capsule) throw new Error("Capsule not found.");
 
-        if (!deletedCapsule) {
-            throw new Error("Capsule not found or you are not authorized to delete it.");
-        }
-
-            return res.status(200).json({
-            success: true,
-            message: "Capsule schedule deleted successfully",
-            deletedId: capsuleId
-        });
-
-    } );
-
+  return res.status(200).json({
+    success: true,
+    message: "Capsule deleted successfully",
+    deletedId: capsule._id,
+  });
+});
 
 export {
-    createCapsule,
-    getRangerCapsules,
-    updateCapsule,
-    deleteCapsule
+  createCapsule,
+  getRangerCapsules,
+  updateCapsule,
+  deleteCapsule
 };
