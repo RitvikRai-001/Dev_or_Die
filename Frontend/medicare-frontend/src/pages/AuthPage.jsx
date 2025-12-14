@@ -48,13 +48,17 @@ export default function Auth() {
     loginSuccess(finalUser); // update AuthContext
 
     const isGoogle = finalUser.provider === "google";
-    const complete = Boolean(finalUser.isProfileComplete);
+const complete = Boolean(finalUser.isProfileComplete);
 
-    if (isGoogle && !complete) {
-      navigate("/complete-profile");
-    } else {
-      navigate("/home");
-    }
+// 🔥 ROLE + PROFILE aware routing
+if (isGoogle && !complete) {
+  navigate("/complete-profile", { replace: true });
+} else if (finalUser.role === "doctor") {
+  navigate("/doctor/home", { replace: true });
+} else {
+  navigate("/home", { replace: true });
+}
+
   } catch (err) {
     console.error(err);
     alert("Google login error");

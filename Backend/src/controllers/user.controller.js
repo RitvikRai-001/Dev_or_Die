@@ -260,41 +260,85 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-const {
+  const {
     fullname,
     age,
     gender,
+    role,
+
+    // Ranger fields
     height,
     weight,
     conditions,
     allergies,
+
+    // Doctor fields
+    specialization,
+    licenseNumber,
+    experience,
   } = req.body;
 
-  const updateData = {
-    fullname,
-    age,
-    gender,
-    height,
-    weight,
-    conditions,
-    allergies,
+  // 🚨 Role is mandatory
+  if (!role) {
+    throw new ApiError(400, "Role is required");
+  }
 
-  };
-  updateData.isProfileComplete = true;
+  // ✅ FETCH USER (you missed this)
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
+  // ───────── Common fields ─────────
+  if (fullname) user.fullname = fullname;
+  if (age !== undefined) user.age = age;
+  if (gender) user.gender = gender;
 
+  // ✅ Explicitly overwrite role
+  user.role = role;
 
-  const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
-    new: true,
-    runValidators: true,
-  }).select("-password");
+  // ───────── Clear old role data ─────────
+  user.height = undefined;
+  user.weight = undefined;
+  user.conditions = undefined;
+  user.allergies = undefined;
+  user.specialization = undefined;
+  user.licenseNumber = undefined;
+  user.experience = undefined;
+
+  // ───────── Role-based assignment ─────────
+  if (role === "ranger") {
+    user.height = height;
+    user.weight = weight;
+    user.conditions = conditions;
+    user.allergies = allergies;
+  }
+
+  if (role === "doctor") {
+    if (!specialization || !licenseNumber) {
+      throw new ApiError(
+        400,
+        "Doctor profile requires specialization and license number"
+      );
+    }
+
+    user.specialization = specialization;
+    user.licenseNumber = licenseNumber;
+    user.experience = experience;
+  }
+
+  user.isProfileComplete = true;
+
+  await user.save();
 
   return res.status(200).json({
     success: true,
     message: "Profile updated successfully",
-    user: updatedUser,
+    user,
   });
 });
+
+
 // const completeProfile = asyncHandler(async (req, res) => {
 //   const userId = req.user._id; // from auth middleware
 

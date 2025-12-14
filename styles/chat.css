@@ -1,0 +1,8 @@
+.chat-card {
+  min-height: 160px;
+}
+
+.chat-placeholder {
+  font-size: 14px;
+  color: var(--text-muted);
+}

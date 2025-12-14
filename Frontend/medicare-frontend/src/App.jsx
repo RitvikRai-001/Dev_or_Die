@@ -3,9 +3,14 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import AuthPage from "./pages/AuthPage.jsx";
 import Home from "./pages/Home.jsx";
 import Profile from "./pages/Profile.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import "./styles/App.css";
 import CompleteProfile from "./pages/CompleteProfile.jsx";
+import DoctorHome from "./pages/DoctorHome.jsx"
+
+
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import DoctorRoute from "./components/DoctorRoute.jsx";
+
+import "./styles/App.css";
 
 
 
@@ -43,6 +48,16 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {/* Doctor Protected Route */}
+        <Route
+          path="/doctor/home"
+          element={
+            <DoctorRoute>
+              <DoctorHome />
+            </DoctorRoute>
+          }
+        />
+
 
 
         {/* Fallback: any unknown route → auth */}

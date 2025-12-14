@@ -1,0 +1,127 @@
+/* BookAppointmentForm.css - modal and form fields */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6,8,12,0.45);
+    z-index: 12000;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+  .modal-card {
+    width: 100%;
+    max-width: 620px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 24px 60px rgba(8,12,24,0.45);
+    overflow: hidden;
+  }
+  
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .modal-header h3 { margin: 0; font-size: 18px; font-weight: 800; color: #0f1724; }
+  
+  .x-btn {
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.12s ease, transform 0.12s ease;
+  }
+  .x-btn:hover { background: rgba(15,23,42,0.04); transform: translateY(-3px); color: #111827; }
+  
+  .book-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 14px;
+    align-items: start;
+  }
+  
+  /* label block */
+  .book-form .label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: #111827;
+  }
+  
+  /* ensure inputs expand */
+  .book-form input[type="text"],
+  .book-form input[type="datetime-local"],
+  .book-form select,
+  .book-form textarea {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #e6e9ef;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+    background: #fff;
+  }
+  
+  /* textarea spanning full width */
+  .book-form .label.textarea { grid-column: 1 / -1; }
+  .book-form textarea { min-height: 100px; resize: vertical; }
+  
+  /* actions row */
+  .modal-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  
+  /* primary + outline btn styles to match global look */
+  .med-btn {
+    background: linear-gradient(135deg,#7c3aed,#8b5cf6);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 12px 40px rgba(124,58,237,0.12);
+  }
+  
+  .outline-btn {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  
+  /* disabled state */
+  .med-btn[disabled] { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+  
+  /* responsive: collapse to single column on small screens */
+  @media (max-width: 720px) {
+    .book-form { grid-template-columns: 1fr; }
+    .book-form .label.textarea { grid-column: auto; }
+    .modal-card { max-width: 520px; padding: 16px; }
+  }
+  
+  /* tiny phones */
+  @media (max-width: 420px) {
+    .modal-card { padding: 12px; }
+    .x-btn { font-size: 18px; }
+    .book-form input, .book-form select { font-size: 14px; padding: 10px; }
+  }
+  

@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+
     },
     fullname: {
       type: String,
@@ -91,7 +92,21 @@ const userSchema = new mongoose.Schema(
     isProfileComplete: {
       type: Boolean,
       default: false,
-    }
+    },
+    specialization: {
+  type: String,
+  trim: true,
+},
+
+licenseNumber: {
+  type: String,
+  trim: true,
+},
+
+experience: {
+  type: Number,
+},
+
 
 
   },
@@ -106,6 +121,24 @@ userSchema.pre("save", async function () {
 
   this.password = await bcrypt.hash(this.password, 10);
 });
+
+userSchema.pre("save", function (next) {
+  if (this.role === "doctor") {
+    if (!this.specialization || !this.licenseNumber) {
+      return next(new Error("Doctor profile incomplete"));
+    }
+  }
+
+  if (this.role === "ranger") {
+    // optional: clear doctor fields automatically
+    this.specialization = undefined;
+    this.licenseNumber = undefined;
+    this.experience = undefined;
+  }
+
+
+});
+
 
 
 

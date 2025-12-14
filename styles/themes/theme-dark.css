@@ -1,0 +1,14 @@
+:root {
+  --bg-main: #020916;
+  --bg-card: #071524;
+  --bg-soft: #0b1e30;
+
+  --primary: #15e6b8;
+  --primary-hover: #13cda4;
+
+  --text-main: #e5f3ff;
+  --text-muted: #7c8ca3;
+
+  --border-color: #1b2a3d;
+  --shadow: rgba(0, 0, 0, 0.6);
+}

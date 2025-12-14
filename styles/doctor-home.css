@@ -1,0 +1,51 @@
+.doctor-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  margin-top: 32px;
+}
+
+.stat-card {
+  padding: 24px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  margin-top: 6px;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.upcoming-card {
+  margin-top: 30px;
+}
+
+.upcoming-table {
+  width: 100%;
+  margin-top: 18px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.upcoming-table th {
+  text-align: left;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+}
+
+.upcoming-table td {
+  padding: 12px 0;
+  color: var(--text-main);
+}
+
+.empty-row {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 20px 0;
+}

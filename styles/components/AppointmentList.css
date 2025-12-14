@@ -1,0 +1,26 @@
+/* AppointmentList.css - container/list helpers (complements Appointment.css) */
+
+.doctor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  
+  /* when list is long, allow scroll with nice spacing */
+  .doctor-list {
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+  
+  .doctor-list::-webkit-scrollbar { width: 8px; }
+  .doctor-list::-webkit-scrollbar-thumb {
+    background: rgba(15,23,42,0.06);
+    border-radius: 999px;
+  }
+  
+  /* empty state */
+  .doctor-list.empty { padding: 18px; color: #6b7280; font-size: 14px; }
+
+  
