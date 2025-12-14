@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { 
     logDoseTake,
     getRangerTimeline,
-    getAdherenceStats
+    getAdherenceStats 
 } from '../controllers/doseLog.controller.js'; 
 
 import { verifyJWT } from '../middlewares/auth.middleware.js'; 

@@ -19,7 +19,7 @@ app.use(cors({
 
 //services import
 
-// import "./services/reminder.service.js"
+ import "./services/reminder.service.js"
 import "./services/autoMiss.service.js";
 import "./services/doseScheduler.service.js";
 
@@ -30,6 +30,7 @@ import symptomRouter from "./routes/symptom.route.js"
 import capsuleRouter from "./routes/capsule.route.js"
 import appointmentRouter from "./routes/appointment.route.js"
 import doseLogRouter from "./routes/doseLog.route.js"
+import notificationRouter from "./routes/notification.route.js";
 
 
 
@@ -43,6 +44,8 @@ app.use("/api/symptom",symptomRouter)
 app.use("/api/capsule",capsuleRouter)
 app.use("/api/appointment",appointmentRouter)
 app.use("/api/doseLog",doseLogRouter)
+app.use("/api/notification", notificationRouter);
+
 app.get("/",(req,res)=>{
   res.send("Hey Ladies")
 }

@@ -1,13 +1,10 @@
 import cron from "node-cron";
-import { DoseLog } from "../models/doseLog.model";
-import { Capsule } from "../models/capsule.model";
-// import { sendEmail } from "../utils/sendEmail.js";
-
-
-
+import { DoseLog } from "../models/doseLog.model.js";
+import { Capsule } from "../models/capsule.model.js";
+import { Notification } from "../models/notification.model.js"; // 🔴 ADDED
 
 cron.schedule("*/1 * * * *", async () => {
-  console.log(" Checking dose reminders...");
+  console.log("⏰ Checking dose reminders...");
 
   const now = new Date();
   const next5Min = new Date(now.getTime() + 5 * 60 * 1000);
@@ -15,7 +12,7 @@ cron.schedule("*/1 * * * *", async () => {
   const dueDoses = await DoseLog.find({
     status: "scheduled",
     reminderSent: false,
-    scheduledTime: { $lte: next5Min }
+    scheduledTime: { $lte: next5Min },
   })
     .populate("rangerId")
     .populate("capsuleId");
@@ -23,17 +20,27 @@ cron.schedule("*/1 * * * *", async () => {
   for (const dose of dueDoses) {
     if (!dose.rangerId || !dose.capsuleId) continue;
 
-    const userEmail = dose.rangerId.email;
-    const capsuleName = dose.capsuleId.name;
+    // 🔴 ADDED: prevent duplicate notifications
+    const alreadyNotified = await Notification.findOne({
+      user: dose.rangerId._id,
+      type: "doseReminder",
+      createdAt: { $gte: new Date(Date.now() - 10 * 60 * 1000) }, // last 10 min
+    });
 
-    // await sendEmail(
-    //   userEmail,
-    //   "Medicine Reminder",
-    //   `It's time to take your capsule: ${capsuleName}`
-    // );
+    if (!alreadyNotified) {
+      // 🔴 ADDED: create in-app notification
+      await Notification.create({
+        user: dose.rangerId._id,
+        type: "doseReminder",
+        title: "Medicine Reminder",
+        message: `It's time to take ${dose.capsuleId.name}`,
+      });
+    }
 
+    // 🔧 EXISTING LOGIC
     dose.reminderSent = true;
     await dose.save();
-    console.log(`Reminder sent for Dose ${dose._id}`);
+
+    console.log(`🔔 Reminder notification created for Dose ${dose._id}`);
   }
 });

@@ -1,4 +1,8 @@
-import { apiGetDoseLogs, apiMarkDoseTaken } from "../services/api";
+import {
+  apiGetDoseLogs,
+  apiMarkDoseTaken,
+  apiGetNotifications,
+} from "../services/api";
 import { useEffect, useRef, useState, useCallback } from "react";
 import "../styles/dashboard.css";
 
@@ -17,13 +21,16 @@ export default function Home() {
   const [notifications, setNotifications] = useState([]);
   const [username, setUsername] = useState("User");
 
+  const manageRef = useRef(null);
 
-    useEffect(() => {
+  // --------------------------------------------------
+  // LOAD USER NAME FROM LOCAL STORAGE (unchanged)
+  // --------------------------------------------------
+  useEffect(() => {
     const stored = localStorage.getItem("user");
     if (stored) {
       try {
         const u = JSON.parse(stored);
-
         setUsername(u.fullname || u.username || "User");
       } catch (err) {
         console.error("Error parsing user from localStorage:", err);
@@ -31,22 +38,90 @@ export default function Home() {
     }
   }, []);
 
+  // --------------------------------------------------
+  // 🔥 NEW: CENTRALIZED NOTIFICATION FETCH FUNCTION
+  // WHY:
+  // - Avoid duplicate logic
+  // - Used by polling + after dose taken + TopNav callbacks
+  // --------------------------------------------------
+  const refreshNotifications = async () => {
+    try {
+      const res = await apiGetNotifications();
+      if (res.success) {
+        setNotifications(res.notifications);
+      }
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    }
+  };
 
+  // --------------------------------------------------
+  // POLL NOTIFICATIONS EVERY 30 SECONDS
+  // WHY:
+  // - Backend cron runs independently
+  // - Keeps UI updated without reload
+  // --------------------------------------------------
+  useEffect(() => {
+    refreshNotifications(); // initial fetch
 
-  const manageRef = useRef(null);
+    const interval = setInterval(refreshNotifications, 30000);
 
-  // -----------------------------
-  // THEME SWITCHER
-  // -----------------------------
+    return () => clearInterval(interval);
+  }, []);
+
+  // --------------------------------------------------
+  // THEME SWITCHER (unchanged)
+  // --------------------------------------------------
   useEffect(() => {
     document.body.className = theme;
   }, [theme]);
 
   const switchTheme = (mode) => setTheme(mode);
 
-  // -------------------------------------------------------------------
-  // MARK DOSE AS TAKEN → Backend → Reload Schedule
-  // -------------------------------------------------------------------
+  // --------------------------------------------------
+  // LOAD ALL DOSE LOGS FROM BACKEND
+  // --------------------------------------------------
+  const loadSchedule = useCallback(async () => {
+    try {
+      const res = await apiGetDoseLogs();
+      if (!res.success || !res.logs) return;
+
+      const cleaned = res.logs.map((log) => {
+        const dt = new Date(log.scheduledTime);
+
+        return {
+          capsuleId: log.capsuleId?._id,
+          name: log.capsuleId?.name || "Medicine",
+          date: dt.toISOString().slice(0, 10),
+          time: dt.toTimeString().slice(0, 5),
+          status: log.status,
+          scheduledTime: log.scheduledTime,
+        };
+      });
+
+      cleaned.sort(
+        (a, b) =>
+          new Date(a.scheduledTime) - new Date(b.scheduledTime)
+      );
+
+      setSchedule(cleaned);
+    } catch (err) {
+      console.error("Error loading dose logs:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSchedule();
+  }, [loadSchedule]);
+
+  // --------------------------------------------------
+  // ✅ UPDATED: MARK DOSE AS TAKEN
+  // ❌ REMOVED window.location.reload()
+  // WHY:
+  // - Reload breaks notification polling
+  // - Resets React state
+  // - Causes unread badge bugs
+  // --------------------------------------------------
   const markDoseTaken = async ({ capsuleId, scheduledTime }) => {
     try {
       const res = await apiMarkDoseTaken(capsuleId, scheduledTime);
@@ -56,63 +131,27 @@ export default function Home() {
         return;
       }
 
-      window.location.reload();//reloads the page
+      // ✅ Correct way: re-fetch data
+      await loadSchedule();
+      await refreshNotifications();
 
+      /*
+      ❌ OLD (removed):
+      window.location.reload();
+
+      WHY REMOVED:
+      - Bad UX
+      - Breaks notification logic
+      - Not needed in React
+      */
     } catch (err) {
       console.error("Error marking dose taken:", err);
     }
   };
 
-  // -------------------------------------------------------------------
-  // LOAD ALL DOSE LOGS FROM BACKEND
-  // -------------------------------------------------------------------
-  const loadSchedule = useCallback(async () => {
-    try {
-      const res = await apiGetDoseLogs();
-
-      if (!res.success || !res.logs) return;
-
-      // Convert timestamps → readable UI objects
-      const cleaned = res.logs.map((log) => {
-        const dt = new Date(log.scheduledTime);
-
-        const yyyy = dt.getFullYear();
-        const mm = String(dt.getMonth() + 1).padStart(2, "0");
-        const dd = String(dt.getDate()).padStart(2, "0");
-        const hh = String(dt.getHours()).padStart(2, "0");
-        const min = String(dt.getMinutes()).padStart(2, "0");
-
-        return {
-          capsuleId: log.capsuleId?._id,
-          name: log.capsuleId?.name || "Medicine",
-          date: `${yyyy}-${mm}-${dd}`,
-          time: `${hh}:${min}`,
-          status: log.status,
-          scheduledTime: log.scheduledTime,
-        };
-      });
-
-      // Sort oldest → newest
-      const sorted = cleaned.sort((a, b) => {
-        const da = new Date(`${a.date}T${a.time}:00`);
-        const db = new Date(`${b.date}T${b.time}:00`);
-        return da - db;
-      });
-
-      setSchedule(sorted);
-    } catch (err) {
-      console.error("Error loading dose logs:", err);
-    }
-  }, []);
-
-  // Load schedule on page load
-  useEffect(() => {
-    loadSchedule();
-  }, [loadSchedule]);
-
-  // -------------------------------------------------------------------
-  // SCROLL TO MANAGE SECTION
-  // -------------------------------------------------------------------
+  // --------------------------------------------------
+  // SCROLL TO MANAGE SECTION (unchanged)
+  // --------------------------------------------------
   const scrollToManage = () => {
     if (manageRef.current) {
       manageRef.current.scrollIntoView({
@@ -122,6 +161,9 @@ export default function Home() {
     }
   };
 
+  // --------------------------------------------------
+  // RENDER
+  // --------------------------------------------------
   return (
     <div className="dashboard-root">
       <TopNav
@@ -130,6 +172,7 @@ export default function Home() {
         onAddMedicationClick={scrollToManage}
         onThemeSwitch={switchTheme}
         schedule={schedule}
+        onNotificationsRead={refreshNotifications} // ✅ NEW: for TopNav actions
       />
 
       <DashboardHeader username={username} />
@@ -146,10 +189,13 @@ export default function Home() {
 
       <div className="middle-grid" ref={manageRef}>
         <ManageMedicines
-          onAddMedication={loadSchedule} // after saving capsule → reload
+          onAddMedication={loadSchedule}
           onCapsulesUpdated={loadSchedule}
         />
-        <AccuracyCircle  />
+
+        {/* AccuracyCircle now fetches adherence itself */}
+        <AccuracyCircle />
+
         <CalendarWidget doses={schedule} />
       </div>
 

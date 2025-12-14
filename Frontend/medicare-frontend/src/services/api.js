@@ -139,6 +139,45 @@ export async function apiGetAdherence(days = 30) {
   return res.json();
 }
 
+// GET notifications
+export async function apiGetNotifications() {
+  const res = await fetch(`${API_BASE}/notification`, {
+    method: "GET",
+    credentials: "include",
+  });
+  return res.json();
+}
+
+// Mark one notification as read
+export async function apiMarkNotificationRead(id) {
+  const res = await fetch(`${API_BASE}/notification/${id}/read`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+  return res.json();
+}
+
+// Mark all as read
+export async function apiMarkAllNotificationsRead() {
+  const res = await fetch(`${API_BASE}/notification/read-all`, {
+    method: "PATCH",
+    credentials: "include",
+  });
+  return res.json();
+}
+
+// ------------------------------------
+// GET UNREAD NOTIFICATION COUNT
+// ------------------------------------
+export async function apiGetUnreadCount() {
+  const res = await fetch(`${API_BASE}/notification/unread-count`, {
+    method: "GET",
+    credentials: "include",
+  });
+  return res.json();
+}
+
+
 
 
 
