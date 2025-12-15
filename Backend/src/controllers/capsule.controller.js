@@ -58,7 +58,8 @@ timesOfDay.forEach((t) => {
 
   // Create today's date correctly in local timezone
   const scheduled = new Date();
-  scheduled.setHours(hour, minute, 0, 0);
+  const gracePeriod = 2 * 60 * 1000; // 2 minutes
+  scheduled.setHours(hour, minute, 30, 0);
 
   // Create DoseLog for ALL times
   // Mark as "missed" if time has passed, "scheduled" if upcoming
@@ -66,7 +67,11 @@ timesOfDay.forEach((t) => {
     rangerId,
     capsuleId: capsule._id,
     scheduledTime: scheduled,
-    status: scheduled < now ? "missed" : "scheduled",
+    status:
+      scheduled.getTime() < now.getTime() - gracePeriod
+        ? "missed"
+        : "scheduled",
+    reminderSent: false, // 🔴 FIX
   });
 });
 
