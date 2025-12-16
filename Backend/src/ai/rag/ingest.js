@@ -17,8 +17,11 @@ async function ingest() {
   await Chroma.fromDocuments(docs, embeddings, {
     collectionName: "medical-knowledge",
     url: "http://localhost:8000",
+    persistDirectory: "./chroma"
+
 
   });
+  
 
   console.log("✅ Chroma vector store created");
 }
