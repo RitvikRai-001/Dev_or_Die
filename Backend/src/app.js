@@ -31,6 +31,9 @@ import capsuleRouter from "./routes/capsule.route.js"
 import appointmentRouter from "./routes/appointment.route.js"
 import doseLogRouter from "./routes/doseLog.route.js"
 import notificationRouter from "./routes/notification.route.js";
+import aiRouter from "./routes/ai.route.js"
+
+
 
 
 
@@ -45,6 +48,8 @@ app.use("/api/capsule",capsuleRouter)
 app.use("/api/appointment",appointmentRouter)
 app.use("/api/doseLog",doseLogRouter)
 app.use("/api/notification", notificationRouter);
+app.use("/api/ai",aiRouter)
+
 
 app.get("/",(req,res)=>{
   res.send("Hey Ladies")
