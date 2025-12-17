@@ -1,76 +1,60 @@
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
-import {embeddings} from "../index.js"
-import { llm } from "../llm/ollama.js"
+import { embeddings } from "../index.js";
+import { llm } from "../llm/ollama.js";
 import { getSession } from "../memory/sessionStore.js";
 import { formatHistory } from "../memory/formatHistory.js";
-
+import { SAFETY_MESSAGES } from "../safety/safetyResponses.js";
+import { classifyMedicalRisk } from "../safety/safetyClassifier.js";
 
 export async function askRAG(question, sessionId) {
+  // 0. Safety first
+  const risk = classifyMedicalRisk(question);
+  if (risk !== "SAFE") {
+    return SAFETY_MESSAGES[risk];
+  }
+
   // 1. Load session memory
   const history = getSession(sessionId);
+  const historyText = formatHistory(history);
 
-  // 2. Load vector store
+  // 2. Load vector store (SERVER MODE)
   const vectorStore = await Chroma.fromExistingCollection(
     embeddings,
     {
       collectionName: "medical-knowledge",
       url: "http://localhost:8000",
-      persistDirectory: "./chroma",
-
+      
     }
   );
 
-  const debug = await vectorStore.similaritySearchWithScore(
-  "paracetamol",
-  3
-);
+  // 3. Similarity search with score
+  const results = await vectorStore.similaritySearchWithScore(
+    question,
+    3
+  );
 
-console.log(
-  "DEBUG vectors:",
-  debug.map(([doc, score]) => ({
-    text: doc.pageContent,
-    score,
-  }))
-);
+  const THRESHOLD = 1.1;
+  const filteredDocs = results.filter(
+    ([_, score]) => score < THRESHOLD
+  );
 
+  const hasContext = filteredDocs.length > 0;
 
+  const context = hasContext
+    ? filteredDocs.map(([doc]) => doc.pageContent).join("\n")
+    : "No relevant context found.";
 
-
-
-
-const results = await vectorStore.similaritySearchWithScore(
-  question,
-  3
-);
-
-
-const THRESHOLD = 1.1; 
-const filteredDocs = results.filter(
-  ([_, score]) => score < THRESHOLD
-);
-
-if (filteredDocs.length === 0) {
-  return "I don’t have enough information to answer that.";
-}
-
-
-const context = filteredDocs
-  .map(([doc, score]) => doc.pageContent)
-  .join("\n");
-
-  // 5. Format chat history
-  const historyText = formatHistory(history);
-
-  // 6. Prompt with memory + RAG
+  // 4. Prompt (HYBRID RAG)
   const prompt = ChatPromptTemplate.fromTemplate(`
 You are a health assistant.
-Use ONLY the context below.
-Answer ONLY using the context below.
-If the answer is not in the context, say:
-"I do not have enough information to answer that."
 
-Do not diagnose or prescribe.
+Rules:
+1. If relevant information is present in the context, use ONLY that context.
+2. If the context does NOT contain the answer, you may use general medical knowledge.
+3. Do NOT diagnose or prescribe medication.
+4. Use cautious language like "may", "generally", "commonly".
+5. If you are unsure, say: "I do not have enough information to answer that."
 
 Chat history:
 {history}
@@ -82,7 +66,7 @@ Question:
 {question}
 `);
 
-  // 7. Run LLM
+  // 5. Run LLM
   const chain = prompt.pipe(llm);
   const res = await chain.invoke({
     context,
@@ -90,7 +74,7 @@ Question:
     history: historyText,
   });
 
-  // 8. Save conversation
+  // 6. Save conversation
   history.push({ role: "user", content: question });
   history.push({ role: "assistant", content: res.content });
 
